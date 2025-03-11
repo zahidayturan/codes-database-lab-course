@@ -1,0 +1,1 @@
+# Er Diyagramları ve Normalizasyon Kuralları
