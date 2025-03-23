@@ -8,3 +8,5 @@ This repo contains some work done with mssql for the database lab course.
   - [Repo Link](https://github.com/zahidayturan/codes-database-lab-course/tree/main/labwork-1)
 - Work 2 (ER Diagrams and Normalization Rules)
   - [Repo Link](https://github.com/zahidayturan/codes-database-lab-course/tree/main/labwork-2)
+- Work 3 (Query Analysis and Query Optimization)
+  - [Repo Link](https://github.com/zahidayturan/codes-database-lab-course/tree/main/labwork-3)
