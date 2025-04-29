@@ -10,3 +10,5 @@ This repo contains some work done with mssql for the database lab course.
   - [Repo Link](https://github.com/zahidayturan/codes-database-lab-course/tree/main/labwork-2)
 - Work 3 (Query Analysis and Query Optimization)
   - [Repo Link](https://github.com/zahidayturan/codes-database-lab-course/tree/main/labwork-3)
+- Work 4 (Constraints, Views, and Indexes)
+  - [Repo Link](https://github.com/zahidayturan/codes-database-lab-course/tree/main/labwork-4)
