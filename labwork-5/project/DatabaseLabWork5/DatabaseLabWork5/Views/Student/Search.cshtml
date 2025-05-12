@@ -1,0 +1,141 @@
+﻿@model DatabaseLabWork5.Models.StudentSearchViewModel
+
+@{
+    ViewData["Title"] = "Search Students";
+}
+
+<div class="container mt-5">
+    <h2>Search Students</h2>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+            <div class="alert alert-success" role="alert">
+            @TempData["SuccessMessage"]
+            </div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+            <div class="alert alert-danger" role="alert">
+            @TempData["ErrorMessage"]
+            </div>
+    }
+    @if (TempData["InfoMessage"] != null)
+    {
+            <div class="alert alert-info" role="alert">
+            @TempData["InfoMessage"]
+            </div>
+    }
+
+    <form asp-action="Search" asp-controller="Student" method="post">
+        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+        <div class="mb-3">
+            <label asp-for="StudentID" class="form-label">Student ID</label>
+            <input asp-for="StudentID" class="form-control" placeholder="Enter student ID" />
+            <span asp-validation-for="StudentID" class="text-danger"></span>
+        </div>
+        <div class="mb-3">
+            <label asp-for="FacultyID" class="form-label">Faculty</label>
+            <select asp-for="FacultyID" id="FacultyID" class="form-select" asp-items="ViewBag.FacultyList">
+                <option value="">Select a faculty</option>
+            </select>
+            <span asp-validation-for="FacultyID" class="text-danger"></span>
+        </div>
+        <div class="mb-3">
+            <label asp-for="DepartmentID" class="form-label">Department</label>
+            <select asp-for="DepartmentID" id="DepartmentID" class="form-select">
+                <option value="">Select a department</option>
+            </select>
+            <span asp-validation-for="DepartmentID" class="text-danger"></span>
+        </div>
+        <div class="mb-3">
+            <label asp-for="Name" class="form-label">Name (First or Last)</label>
+            <input asp-for="Name" class="form-control" placeholder="Enter first or last name" />
+            <span asp-validation-for="Name" class="text-danger"></span>
+        </div>
+        <div class="mb-3">
+            <button type="submit" class="btn btn-primary">Search</button>
+            <a asp-controller="Home" asp-action="Index" class="btn btn-secondary">Back to Home</a>
+        </div>
+    </form>
+
+    @if (Model.SearchResults != null)
+    {
+            <h3 class="mt-4">Search Results</h3>
+        @if (Model.SearchResults.Any())
+        {
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Student ID</th>
+                                <th>First Name</th>
+                                <th>Last Name</th>
+                                <th>Department</th>
+                                <th>Faculty</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                    @foreach (var student in Model.SearchResults)
+                    {
+                                    <tr>
+                                        <td>@student.StudentID</td>
+                                        <td>@student.FirstName</td>
+                                        <td>@student.LastName</td>
+                                        <td>@student.Department?.DepartmentName</td>
+                                        <td>@student.Department?.Faculty?.FacultyName</td>
+                                        <td>
+                                            <a asp-action="Details" asp-route-id="@student.StudentID" class="btn btn-sm btn-info">Details</a>
+                                        </td>
+                                    </tr>
+                    }
+                        </tbody>
+                    </table>
+        }
+        else
+        {
+                    <p>No students found.</p>
+        }
+    }
+</div>
+
+@section Scripts {
+        <partial name="_ValidationScriptsPartial" />
+        <script>
+            document.getElementById('FacultyID').addEventListener('change', async function () {
+                const facultyId = this.value;
+                const departmentSelect = document.getElementById('DepartmentID');
+                departmentSelect.innerHTML = '<option value="">Select a department</option>';
+                console.log(`Fetching departments for FacultyID: ${facultyId}`);
+
+                if (facultyId) {
+                    try {
+                        const response = await fetch(`/Department/GetByFaculty?facultyId=${facultyId}`);
+                        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                        const departments = await response.json();
+                        console.log('Departments loaded:', departments);
+                        departments.forEach(dept => {
+                            const option = document.createElement('option');
+                            option.value = dept.departmentID;
+                            option.textContent = dept.departmentName;
+                            departmentSelect.appendChild(option);
+                        });
+                    } catch (error) {
+                        console.error('Error loading departments:', error);
+                        departmentSelect.innerHTML = '<option value="">Error loading departments</option>';
+                    }
+                }
+            });
+
+            document.querySelector('form').addEventListener('submit', function (e) {
+                const studentId = document.getElementById('StudentID').value;
+                const facultyId = document.getElementById('FacultyID').value;
+                const departmentId = document.getElementById('DepartmentID').value;
+                const name = document.getElementById('Name').value;
+
+                if (!studentId && !facultyId && !departmentId && !name.trim()) {
+                    e.preventDefault();
+                    document.querySelector('.text-danger').textContent = 'Please provide at least one search criterion.';
+                }
+            });
+        </script>
+}

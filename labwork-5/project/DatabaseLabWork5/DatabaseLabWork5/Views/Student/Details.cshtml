@@ -1,0 +1,188 @@
+﻿@model DatabaseLabWork5.Models.StudentDetailsViewModel
+
+@{
+    ViewData["Title"] = "Student Details";
+}
+
+<div class="container mt-5">
+    <h2>Student Details</h2>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+            <div class="alert alert-success" role="alert">
+            @TempData["SuccessMessage"]
+            </div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+            <div class="alert alert-danger" role="alert">
+            @TempData["ErrorMessage"]
+            </div>
+    }
+
+    <div class="card mb-4">
+        <div class="card-body">
+            <h5 class="card-title">@Model.Student.FirstName @Model.Student.LastName</h5>
+            <p class="card-text"><strong>Student ID:</strong> @Model.Student.StudentID</p>
+            <p class="card-text"><strong>Department:</strong> @Model.Student.Department?.DepartmentName</p>
+            <p class="card-text"><strong>Faculty:</strong> @Model.Student.Department?.Faculty?.FacultyName</p>
+        </div>
+    </div>
+
+    <h3>Assign New Course</h3>
+    <form asp-action="AssignCourse" asp-controller="Student" method="post">
+        <input type="hidden" name="studentId" value="@Model.Student.StudentID" />
+        <div class="mb-3">
+            <label for="courseId" class="form-label">Course</label>
+            <select name="courseId" id="courseId" class="form-select" asp-items="Model.AvailableCourses">
+                <option value="">Select a course</option>
+            </select>
+        </div>
+        <div class="mb-3">
+            <label for="year" class="form-label">Year</label>
+            <input type="number" name="year" id="year" class="form-control" value="@DateTime.Now.Year" min="2000" max="@(DateTime.Now.Year + 1)" />
+        </div>
+        <div class="mb-3">
+            <label for="semester" class="form-label">Semester</label>
+            <select name="semester" id="semester" class="form-select">
+                <option value="">Select a semester</option>
+                <option value="Fall">Fall</option>
+                <option value="Spring">Spring</option>
+                <option value="Summer">Summer</option>
+            </select>
+        </div>
+        <div class="mb-3">
+            <button type="submit" class="btn btn-primary">Assign Course</button>
+        </div>
+    </form>
+
+    <h3>Assigned Courses</h3>
+    @if (Model.StudentCourses.Any())
+    {
+            <table class="table">
+                    <thead class="thead-dark">
+                    <tr>
+                        <th>Course Name</th>
+                        <th>Year</th>
+                        <th>Semester</th>
+                        <th>Midterm-Final Notes</th>
+                        <th>Average</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @foreach (var sc in Model.StudentCourses)
+                {
+                            <tr>
+                                <td>@sc.Course?.CourseName</td>
+                                <td>@sc.Year</td>
+                                <td>@sc.Semester</td>
+                                <td>
+                                <form asp-action="UpdateGrades" asp-controller="Student" method="post" class="d-inline">
+                                    <input type="hidden" name="studentId" value="@Model.Student.StudentID" />
+                                    <input type="hidden" name="courseId" value="@sc.CourseID" />
+
+                                    <div class="row sb-3">
+                                        <div class="col-md-5">
+                                            <label for="midterm" class="form-label">Midterm</label>
+                                            <input type="number" name="midterm" value="@sc.Midterm" class="form-control grade-input" min="0" max="100" placeholder="Enter midterm" />
+                                        </div>
+                                        <div class="col-md-5">
+                                            <label for="final" class="form-label">Final</label>
+                                            <input type="number" name="final" value="@sc.Final" class="form-control grade-input" min="0" max="100" placeholder="Enter final" />
+                                        </div>
+                                    </div>
+                                </form>
+                                </td>
+                                <td class="average">@(sc.Midterm.HasValue && sc.Final.HasValue ? (sc.Midterm.Value * 0.4 + sc.Final.Value * 0.6).ToString("F2") : "-")</td>
+                                <td>
+                                    <button type="button" class="btn btn-sm btn-warning update-grades-btn" data-student-id="@Model.Student.StudentID" data-course-id="@sc.CourseID">Update</button>
+                                    <form asp-action="RemoveCourse" asp-controller="Student" method="post" class="d-inline delete-form" data-id="@sc.CourseID">
+                                        <input type="hidden" name="studentId" value="@Model.Student.StudentID" />
+                                        <input type="hidden" name="courseId" value="@sc.CourseID" />
+                                        <button type="submit" class="btn btn-sm btn-danger">Remove</button>
+                                    </form>
+                                </td>
+                            </tr>
+                }
+                </tbody>
+            </table>
+    }
+    else
+    {
+            <p>No courses assigned to this student.</p>
+    }
+
+    <a asp-action="Search" class="btn btn-secondary mt-3">Back to Search</a>
+</div>
+
+@section Scripts {
+        <partial name="_ValidationScriptsPartial" />
+        <script>
+            document.querySelectorAll('.grade-input').forEach(input => {
+                input.addEventListener('change', function () {
+                    const row = this.closest('tr');
+                    const midterm = row.querySelector('input[name="midterm"]').value;
+                    const final = row.querySelector('input[name="final"]').value;
+                    const averageCell = row.querySelector('.average');
+                    if (midterm && final) {
+                        const avg = (parseFloat(midterm) * 0.4 + parseFloat(final) * 0.6).toFixed(2);
+                        averageCell.textContent = avg;
+                    } else {
+                        averageCell.textContent = '-';
+                    }
+                });
+            });
+
+            document.querySelectorAll('.update-grades-btn').forEach(button => {
+                button.addEventListener('click', function () {
+                    const studentId = this.getAttribute('data-student-id');
+                    const courseId = this.getAttribute('data-course-id');
+                    const row = this.closest('tr');
+                    const midtermInput = row.querySelector('input[name="midterm"]');
+                    const finalInput = row.querySelector('input[name="final"]');
+
+                    // Eğer her ikisi de boşsa, hiçbir şey yapma
+                    if (!midtermInput.value || !finalInput.value) {
+                        alert('Please enter both Midterm and Final grades.');
+                        return;
+                    }
+
+                    // Formu bul ve verileri güncelle
+                    const form = row.querySelector('form');
+                    form.querySelector('input[name="midterm"]').value = midtermInput.value;
+                    form.querySelector('input[name="final"]').value = finalInput.value;
+
+                    // Formu gönder
+                    form.submit();
+                });
+            });
+
+            document.querySelectorAll('.delete-form').forEach(form => {
+                form.addEventListener('submit', function (e) {
+                    if (!confirm('Are you sure you want to remove this course?')) {
+                        e.preventDefault();
+                    }
+                });
+            });
+
+            document.querySelector('form[action*="AssignCourse"]').addEventListener('submit', function (e) {
+                const courseId = document.getElementById('courseId').value;
+                const year = document.getElementById('year').value;
+                const semester = document.getElementById('semester').value;
+
+                if (!courseId) {
+                    e.preventDefault();
+                    alert('Please select a course.');
+                }
+                if (!year || year < 2000 || year > @(DateTime.Now.Year + 1)) {
+                    e.preventDefault();
+                    alert('Please enter a valid year.');
+                }
+                if (!semester) {
+                    e.preventDefault();
+                    alert('Please select a semester.');
+                }
+            });
+        </script>
+}

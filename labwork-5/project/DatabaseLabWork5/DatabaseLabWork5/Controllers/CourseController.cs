@@ -137,5 +137,16 @@ namespace DatabaseLabWork5.Controllers
 
             return RedirectToAction(nameof(Index));
         }
+
+        // GET: /Course/GetByDepartment
+        [HttpGet]
+        public async Task<IActionResult> GetByDepartment(int departmentId)
+        {
+            var courses = await _context.Courses
+                .Where(c => c.DepartmentID == departmentId)
+                .Select(c => new { c.CourseID, c.CourseName })
+                .ToListAsync();
+            return Json(courses);
+        }
     }
 }
