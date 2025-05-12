@@ -4,8 +4,17 @@
     ViewData["Title"] = "Student Details";
 }
 
-<div class="container mt-5">
-    <h2>Student Details</h2>
+<div class="container mt-2">
+
+        <div class="row align-items-center mt-3">
+            <div class="col-auto">
+               <h2>Student Details</h2>
+            </div>
+            <div class="col text-end">
+                <a asp-controller="Home" asp-action="Index" class="btn btn-secondary">Back to Home</a>
+            </div>
+        </div>
+
 
     @if (TempData["SuccessMessage"] != null)
     {

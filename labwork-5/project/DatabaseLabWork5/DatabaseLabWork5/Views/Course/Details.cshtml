@@ -4,8 +4,19 @@
     ViewData["Title"] = "Course Details";
 }
 
-<div class="container mt-5">
-    <h2>Course Details</h2>
+<div class="container mt-2">
+
+        <div class="row align-items-center mt-3">
+            <div class="col-auto">
+                <h2>Course Details</h2>
+            </div>
+            <div class="col text-end">
+                <a asp-action="Index" asp-controller="Course" class="btn btn-secondary mt-3">Back to Course List</a>
+                <a asp-controller="Home" asp-action="Index" class="btn btn-secondary">Back to Home</a>
+            </div>
+        </div>
+
+
 
     @if (TempData["ErrorMessage"] != null)
     {
@@ -85,6 +96,4 @@
                 No students are enrolled in this course.
             </div>
     }
-
-    <a asp-action="Index" asp-controller="Course" class="btn btn-secondary mt-3">Back to Course List</a>
 </div>
