@@ -40,11 +40,6 @@ namespace DatabaseLabWork5.Controllers
                     ModelState.AddModelError("", $"An error occurred while saving the faculty: {ex.InnerException?.Message ?? ex.Message}");
                 }
             }
-            if (!ModelState.IsValid)
-            {
-                var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage);
-                ModelState.AddModelError("", "Validation errors: " + string.Join(", ", errors));
-            }
             return View(faculty);
         }
 
@@ -53,6 +48,74 @@ namespace DatabaseLabWork5.Controllers
         {
             var faculties = await _context.Faculties.ToListAsync();
             return View(faculties);
+        }
+
+        // POST: /Faculty/Edit
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Edit(int id, [Bind("FacultyID,FacultyName")] Faculty faculty)
+        {
+            if (id != faculty.FacultyID)
+            {
+                TempData["ErrorMessage"] = "Invalid faculty ID.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            if (ModelState.IsValid)
+            {
+                try
+                {
+                    var existingFaculty = await _context.Faculties.FindAsync(id);
+                    if (existingFaculty == null)
+                    {
+                        TempData["ErrorMessage"] = "Faculty not found.";
+                        return RedirectToAction(nameof(Index));
+                    }
+
+                    existingFaculty.FacultyName = faculty.FacultyName;
+                    _context.Update(existingFaculty);
+                    await _context.SaveChangesAsync();
+                    TempData["SuccessMessage"] = "Faculty updated successfully!";
+                    return RedirectToAction(nameof(Index));
+                }
+                catch (DbUpdateException ex)
+                {
+                    TempData["ErrorMessage"] = $"An error occurred while updating the faculty: {ex.InnerException?.Message ?? ex.Message}";
+                }
+            }
+            else
+            {
+                var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage);
+                TempData["ErrorMessage"] = "Validation errors: " + string.Join(", ", errors);
+            }
+
+            return RedirectToAction(nameof(Index));
+        }
+
+        // POST: /Faculty/Delete
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Delete(int id)
+        {
+            var faculty = await _context.Faculties.FindAsync(id);
+            if (faculty == null)
+            {
+                TempData["ErrorMessage"] = "Faculty not found.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            try
+            {
+                _context.Faculties.Remove(faculty);
+                await _context.SaveChangesAsync();
+                TempData["SuccessMessage"] = "Faculty deleted successfully!";
+            }
+            catch (DbUpdateException ex)
+            {
+                TempData["ErrorMessage"] = $"An error occurred while deleting the faculty: {ex.InnerException?.Message ?? ex.Message}";
+            }
+
+            return RedirectToAction(nameof(Index));
         }
     }
 }
