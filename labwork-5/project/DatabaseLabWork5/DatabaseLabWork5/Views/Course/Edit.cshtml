@@ -1,0 +1,44 @@
+﻿@model DatabaseLabWork5.Models.Course
+
+@{
+    ViewData["Title"] = "Edit Course";
+}
+
+<div class="container mt-2">
+    <div class="row align-items-center mt-3">
+        <div class="col-auto">
+            <h2>Edit Course</h2>
+        </div>
+        <div class="col text-end">
+            <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+            <a asp-controller="Home" asp-action="Index" class="btn btn-secondary">Back to Home</a>
+        </div>
+    </div>
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+            <div class="alert alert-danger" role="alert">
+            @TempData["ErrorMessage"]
+            </div>
+    }
+
+<form asp-action="Edit" method="post">
+        <input type="hidden" asp-for="CourseID" />
+        <div class="mb-3">
+            <label asp-for="CourseName" class="form-label"></label>
+            <input asp-for="CourseName" class="form-control" />
+            <span asp-validation-for="CourseName" class="text-danger"></span>
+        </div>
+        <div class="mb-3">
+            <label asp-for="DepartmentID" class="form-label">Department</label>
+            <select asp-for="DepartmentID" asp-items="@ViewBag.DepartmentList" class="form-select"></select>
+            <span asp-validation-for="DepartmentID" class="text-danger"></span>
+        </div>
+        <button type="submit" class="btn btn-primary">Save</button>
+        <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+    </form>
+</div>
+
+@section Scripts {
+        <partial name="_ValidationScriptsPartial" />
+}

@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using System.Linq;
 using System.Threading.Tasks;
+using static DatabaseLabWork5.Models.CourseDetailsViewModel;
 
 namespace DatabaseLabWork5.Controllers
 {
@@ -53,7 +54,9 @@ namespace DatabaseLabWork5.Controllers
                 ModelState.AddModelError("", "Validation errors: " + string.Join(", ", errors));
             }
             ViewBag.FacultyList = new SelectList(_context.Faculties, "FacultyID", "FacultyName");
-            ViewBag.DepartmentList = new SelectList(_context.Departments.Where(d => d.FacultyID == _context.Departments.FirstOrDefault(d2 => d2.DepartmentID == course.DepartmentID).FacultyID), "DepartmentID", "DepartmentName", course.DepartmentID);
+            ViewBag.DepartmentList = new SelectList(
+                _context.Departments.Where(d => d.FacultyID == _context.Departments.FirstOrDefault(d2 => d2.DepartmentID == course.DepartmentID).FacultyID),
+                "DepartmentID", "DepartmentName", course.DepartmentID);
             return View(course);
         }
 
@@ -76,7 +79,6 @@ namespace DatabaseLabWork5.Controllers
                 SelectedSemester = semester
             };
 
-            // Yıl seçeneklerini çek
             var years = await _context.StudentCourses
                 .Select(sc => sc.Year)
                 .Distinct()
@@ -88,7 +90,6 @@ namespace DatabaseLabWork5.Controllers
                 viewModel.YearOptions.Add(new SelectListItem { Value = y.ToString(), Text = y.ToString() });
             }
 
-            // Kursları ve filtreleri uygula
             var coursesQuery = _context.Courses
                 .Include(c => c.Department)
                 .ThenInclude(d => d.Faculty)
@@ -107,7 +108,6 @@ namespace DatabaseLabWork5.Controllers
 
             viewModel.Courses = await coursesQuery.OrderBy(c => c.CourseName).ToListAsync();
 
-            // Her kurs için yıl/dönem bilgisi (istemci tarafında)
             foreach (var course in viewModel.Courses)
             {
                 var enrollments = await _context.StudentCourses
@@ -131,7 +131,6 @@ namespace DatabaseLabWork5.Controllers
             return View(viewModel);
         }
 
-
         // POST: /Course/Details
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -143,6 +142,12 @@ namespace DatabaseLabWork5.Controllers
         // Ortak detay alma metodu
         private async Task<IActionResult> GetCourseDetails(int id)
         {
+            if (id <= 0)
+            {
+                TempData["ErrorMessage"] = "Invalid course ID.";
+                return RedirectToAction(nameof(Index));
+            }
+
             var course = await _context.Courses
                 .Include(c => c.Department)
                 .ThenInclude(d => d.Faculty)
@@ -150,7 +155,7 @@ namespace DatabaseLabWork5.Controllers
 
             if (course == null)
             {
-                TempData["ErrorMessage"] = "Course not found.";
+                TempData["ErrorMessage"] = $"Course with ID {id} not found.";
                 return RedirectToAction(nameof(Index));
             }
 
@@ -204,47 +209,91 @@ namespace DatabaseLabWork5.Controllers
             return View(model);
         }
 
-        // POST: /Course/Edit
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("CourseID,CourseName,DepartmentID")] Course course)
+        // GET: /Course/Edit
+        [HttpGet]
+        public async Task<IActionResult> Edit(int id)
         {
-            if (id != course.CourseID)
+            if (id <= 0)
             {
                 TempData["ErrorMessage"] = "Invalid course ID.";
                 return RedirectToAction(nameof(Index));
             }
 
-            if (ModelState.IsValid)
+            var course = await _context.Courses
+                .Include(c => c.Department)
+                .ThenInclude(d => d.Faculty)
+                .FirstOrDefaultAsync(c => c.CourseID == id);
+
+            if (course == null)
             {
-                try
+                TempData["ErrorMessage"] = $"Course with ID {id} not found.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            ViewBag.DepartmentList = new SelectList(
+                _context.Departments.Select(d => new
                 {
-                    var existingCourse = await _context.Courses.FindAsync(id);
-                    if (existingCourse == null)
+                    d.DepartmentID,
+                    Display = $"{d.DepartmentName} ({d.Faculty.FacultyName})"
+                }), "DepartmentID", "Display", course.DepartmentID);
+
+            return View(course);
+        }
+
+        // POST: /Course/Edit
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Edit([Bind("CourseID,CourseName,DepartmentID")] Course course)
+        {
+            if (course.CourseID <= 0)
+            {
+                TempData["ErrorMessage"] = "Invalid course ID.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            if (!ModelState.IsValid)
+            {
+                ViewBag.DepartmentList = new SelectList(
+                    _context.Departments.Select(d => new
                     {
-                        TempData["ErrorMessage"] = "Course not found.";
-                        return RedirectToAction(nameof(Index));
-                    }
-
-                    existingCourse.CourseName = course.CourseName;
-                    existingCourse.DepartmentID = course.DepartmentID;
-                    _context.Update(existingCourse);
-                    await _context.SaveChangesAsync();
-                    TempData["SuccessMessage"] = "Course updated successfully!";
-                    return RedirectToAction(nameof(Index));
-                }
-                catch (DbUpdateException ex)
-                {
-                    TempData["ErrorMessage"] = ($"An error occurred while updating the course: {ex.InnerException?.Message ?? ex.Message}");
-                }
+                        d.DepartmentID,
+                        Display = $"{d.DepartmentName} ({d.Faculty.FacultyName})"
+                    }), "DepartmentID", "Display", course.DepartmentID);
+                return View(course);
             }
-            else
+
+            var existingCourse = await _context.Courses
+                .Include(c => c.Department)
+                .ThenInclude(d => d.Faculty)
+                .FirstOrDefaultAsync(c => c.CourseID == course.CourseID);
+
+            if (existingCourse == null)
             {
-                var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage);
-                TempData["ErrorMessage"] = "Validation errors: " + string.Join(", ", errors);
+                TempData["ErrorMessage"] = $"Course with ID {course.CourseID} not found.";
+                return RedirectToAction(nameof(Index));
             }
 
-            return RedirectToAction(nameof(Index));
+            try
+            {
+                existingCourse.CourseName = course.CourseName;
+                existingCourse.DepartmentID = course.DepartmentID;
+
+                _context.Update(existingCourse);
+                await _context.SaveChangesAsync();
+                TempData["SuccessMessage"] = "Course updated successfully!";
+                return RedirectToAction(nameof(Index));
+            }
+            catch (DbUpdateException ex)
+            {
+                ModelState.AddModelError("", $"An error occurred while updating the course: {ex.InnerException?.Message ?? ex.Message}");
+                ViewBag.DepartmentList = new SelectList(
+                    _context.Departments.Select(d => new
+                    {
+                        d.DepartmentID,
+                        Display = $"{d.DepartmentName} ({d.Faculty.FacultyName})"
+                    }), "DepartmentID", "Display", course.DepartmentID);
+                return View(course);
+            }
         }
 
         // POST: /Course/Delete
@@ -252,15 +301,28 @@ namespace DatabaseLabWork5.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(int id)
         {
+            if (id <= 0)
+            {
+                TempData["ErrorMessage"] = "Invalid course ID.";
+                return RedirectToAction(nameof(Index));
+            }
+
             var course = await _context.Courses.FindAsync(id);
             if (course == null)
             {
-                TempData["ErrorMessage"] = "Course not found.";
+                TempData["ErrorMessage"] = $"Course with ID {id} not found.";
                 return RedirectToAction(nameof(Index));
             }
 
             try
             {
+                var hasEnrollments = await _context.StudentCourses.AnyAsync(sc => sc.CourseID == id);
+                if (hasEnrollments)
+                {
+                    TempData["ErrorMessage"] = "Cannot delete course because it has enrollments.";
+                    return RedirectToAction(nameof(Index));
+                }
+
                 _context.Courses.Remove(course);
                 await _context.SaveChangesAsync();
                 TempData["SuccessMessage"] = "Course deleted successfully!";
@@ -277,6 +339,11 @@ namespace DatabaseLabWork5.Controllers
         [HttpGet]
         public async Task<IActionResult> GetByDepartment(int departmentId)
         {
+            if (departmentId <= 0)
+            {
+                return Json(new { success = false, message = "Invalid department ID." });
+            }
+
             var courses = await _context.Courses
                 .Where(c => c.DepartmentID == departmentId)
                 .Select(c => new { c.CourseID, c.CourseName })

@@ -4,8 +4,18 @@
     ViewData["Title"] = "Add Faculty";
 }
 
-<div class="container mt-5">
-    <h2>Add New Faculty</h2>
+<div class="container mt-2">
+
+     <div class="row align-items-center mt-3">
+            <div class="col-auto">
+                <h2>Add New Faculty</h2>
+            </div>
+            <div class="col text-end">
+                <a asp-action="Index" class="btn btn-secondary">Back to List</a>
+                <a asp-controller="Home" asp-action="Index" class="btn btn-secondary">Back to Home</a>
+            </div>
+        </div>
+
 
     @if (TempData["SuccessMessage"] != null)
     {
@@ -23,7 +33,6 @@
         </div>
         <div class="mb-3">
             <button type="submit" class="btn btn-primary">Add Faculty</button>
-            <a asp-action="Index" class="btn btn-secondary">Back to List</a>
         </div>
     </form>
 </div>
