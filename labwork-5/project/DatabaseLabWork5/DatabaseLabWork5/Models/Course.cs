@@ -1,8 +1,8 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.Collections.Generic;
 
 namespace DatabaseLabWork5.Models
 {
-    // Course Entity
     public class Course
     {
         [Key]
@@ -12,7 +12,11 @@ namespace DatabaseLabWork5.Models
         [StringLength(100)]
         public string CourseName { get; set; }
 
-        public List<StudentCourse> StudentCourses { get; set; }
-    }
+        [Required]
+        public int DepartmentID { get; set; }
 
+        public Department? Department { get; set; }
+
+        public List<StudentCourse>? StudentCourses { get; set; }
+    }
 }

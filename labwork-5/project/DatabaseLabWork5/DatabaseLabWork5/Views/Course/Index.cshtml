@@ -1,0 +1,176 @@
+﻿@model List<DatabaseLabWork5.Models.Course>
+
+@{
+    ViewData["Title"] = "Course List";
+}
+
+<div class="container mt-5">
+    <h2>Course List</h2>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+            <div class="alert alert-success" role="alert">
+            @TempData["SuccessMessage"]
+            </div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+            <div class="alert alert-danger" role="alert">
+            @TempData["ErrorMessage"]
+            </div>
+    }
+
+    <p>
+        <a asp-action="Create" class="btn btn-primary">Add New Course</a>
+        <a asp-controller="Home" asp-action="Index" class="btn btn-secondary">Back to Home</a>
+    </p>
+
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Course ID</th>
+                <th>Course Name</th>
+                <th>Department</th>
+                <th>Faculty</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var course in Model)
+            {
+                    <tr>
+                        <td>@course.CourseID</td>
+                        <td>
+                            <form asp-action="Edit" asp-controller="Course" method="post" id="edit-form-@course.CourseID" class="d-inline">
+                                <input type="hidden" name="id" value="@course.CourseID" />
+                                <input type="hidden" name="CourseID" value="@course.CourseID" />
+                                <input type="text" name="CourseName" value="@course.CourseName" class="form-control course-name" id="course-name-@course.CourseID" readonly />
+                            </form>
+                        </td>
+                        <td>
+                            <form asp-action="Edit" asp-controller="Course" method="post" id="edit-form-department-@course.CourseID" class="d-inline">
+                                <input type="hidden" name="id" value="@course.CourseID" />
+                                <input type="hidden" name="CourseID" value="@course.CourseID" />
+                                <select name="DepartmentID" class="form-select department-select" id="department-select-@course.CourseID" disabled>
+                                    <option value="@course.DepartmentID" selected>@course.Department?.DepartmentName</option>
+                                </select>
+                            </form>
+                        </td>
+                        <td>
+                            <form asp-action="Edit" asp-controller="Course" method="post" id="edit-form-faculty-@course.CourseID" class="d-inline">
+                                <input type="hidden" name="id" value="@course.CourseID" />
+                                <input type="hidden" name="CourseID" value="@course.CourseID" />
+                                <select name="FacultyID" class="form-select faculty-select" id="faculty-select-@course.CourseID" disabled>
+                                    <option value="@course.Department?.FacultyID" selected>@course.Department?.Faculty?.FacultyName</option>
+                                @foreach (var faculty in (SelectList)ViewBag.FacultyList)
+                                {
+                                    if (faculty.Value != course.Department?.FacultyID.ToString())
+                                    {
+                                                    <option value="@faculty.Value">@faculty.Text</option>
+                                    }
+                                }
+                                </select>
+                            </form>
+                        </td>
+                        <td>
+                            <button type="button" class="btn btn-sm btn-warning edit-btn" data-id="@course.CourseID">Edit</button>
+                            <form asp-action="Delete" asp-controller="Course" method="post" class="d-inline delete-form" data-id="@course.CourseID">
+                                <input type="hidden" name="id" value="@course.CourseID" />
+                                <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                            </form>
+                        </td>
+                    </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@section Scripts {
+        <script>
+            document.querySelectorAll('.edit-btn').forEach(button => {
+                button.addEventListener('click', async function () {
+                    const courseId = this.getAttribute('data-id');
+                    const nameInput = document.getElementById(`course-name-${courseId}`);
+                    const facultySelect = document.getElementById(`faculty-select-${courseId}`);
+                    const departmentSelect = document.getElementById(`department-select-${courseId}`);
+                    const nameForm = document.getElementById(`edit-form-${courseId}`);
+                    const facultyForm = document.getElementById(`edit-form-faculty-${courseId}`);
+                    const departmentForm = document.getElementById(`edit-form-department-${courseId}`);
+
+                    if (this.textContent === 'Edit') {
+                        // Enable editing
+                        nameInput.removeAttribute('readonly');
+                        facultySelect.removeAttribute('disabled');
+                        departmentSelect.removeAttribute('disabled');
+                        nameInput.focus();
+                        this.textContent = 'Save';
+                        this.classList.remove('btn-warning');
+                        this.classList.add('btn-success');
+
+                        // Load departments for selected faculty
+                        await updateDepartments(facultySelect.value, departmentSelect, courseId);
+                    } else {
+                        // Validate inputs before submitting
+                        if (!nameInput.value.trim()) {
+                            alert('Course name cannot be empty.');
+                            return;
+                        }
+                        if (!facultySelect.value) {
+                            alert('Please select a faculty.');
+                            return;
+                        }
+                        if (!departmentSelect.value) {
+                            alert('Please select a department.');
+                            return;
+                        }
+
+                        // Update hidden inputs in nameForm to include DepartmentID
+                        const departmentIdInput = document.createElement('input');
+                        departmentIdInput.type = 'hidden';
+                        departmentIdInput.name = 'DepartmentID';
+                        departmentIdInput.value = departmentSelect.value;
+                        nameForm.appendChild(departmentIdInput);
+
+                        console.log(`Submitting form for CourseID: ${courseId}`);
+                        nameForm.submit();
+                    }
+                });
+            });
+
+            document.querySelectorAll('.faculty-select').forEach(select => {
+                select.addEventListener('change', async function () {
+                    const courseId = this.id.replace('faculty-select-', '');
+                    const departmentSelect = document.getElementById(`department-select-${courseId}`);
+                    await updateDepartments(this.value, departmentSelect, courseId);
+                });
+            });
+
+            async function updateDepartments(facultyId, departmentSelect, courseId) {
+                departmentSelect.innerHTML = '<option value="">Select a department</option>';
+                if (facultyId) {
+                    try {
+                        const response = await fetch(`/Department/GetByFaculty?facultyId=${facultyId}`);
+                        if (!response.ok) throw new Error('Failed to load departments');
+                        const departments = await response.json();
+                        departments.forEach(dept => {
+                            const option = document.createElement('option');
+                            option.value = dept.departmentID;
+                            option.textContent = dept.departmentName;
+                            departmentSelect.appendChild(option);
+                        });
+                    } catch (error) {
+                        console.error('Error loading departments:', error);
+                        departmentSelect.innerHTML = '<option value="">Error loading departments</option>';
+                    }
+                }
+            }
+
+            document.querySelectorAll('.delete-form').forEach(form => {
+                form.addEventListener('submit', function (e) {
+                    if (!confirm('Are you sure you want to delete this course?')) {
+                        e.preventDefault();
+                    }
+                });
+            });
+        </script>
+}

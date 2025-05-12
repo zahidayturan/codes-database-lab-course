@@ -1,0 +1,84 @@
+﻿@model DatabaseLabWork5.Models.Course
+
+@{
+    ViewData["Title"] = "Add Course";
+}
+
+<div class="container mt-5">
+    <h2>Add New Course</h2>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+            <div class="alert alert-success" role="alert">
+            @TempData["SuccessMessage"]
+            </div>
+    }
+
+    <form asp-action="Create" asp-controller="Course" method="post">
+        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+        <div class="mb-3">
+            <label asp-for="CourseName" class="form-label">Course Name</label>
+            <input asp-for="CourseName" class="form-control" placeholder="Enter course name" />
+            <span asp-validation-for="CourseName" class="text-danger"></span>
+        </div>
+        <div class="mb-3">
+            <label for="FacultyID" class="form-label">Faculty</label>
+            <select id="FacultyID" class="form-select" asp-items="ViewBag.FacultyList">
+                <option value="">Select a faculty</option>
+            </select>
+            <span class="text-danger" id="FacultyID-validation"></span>
+        </div>
+        <div class="mb-3">
+            <label asp-for="DepartmentID" class="form-label">Department</label>
+            <select asp-for="DepartmentID" class="form-select" id="DepartmentID">
+                <option value="">Select a department</option>
+            </select>
+            <span asp-validation-for="DepartmentID" class="text-danger"></span>
+        </div>
+        <div class="mb-3">
+            <button type="submit" class="btn btn-primary">Add Course</button>
+            <a asp-action="Index" class="btn btn-secondary">Back to List</a>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+        <partial name="_ValidationScriptsPartial" />
+        <script>
+            document.getElementById('FacultyID').addEventListener('change', async function () {
+                const facultyId = this.value;
+                const departmentSelect = document.getElementById('DepartmentID');
+                departmentSelect.innerHTML = '<option value="">Select a department</option>';
+
+                if (facultyId) {
+                    try {
+                        const response = await fetch(`/Department/GetByFaculty?facultyId=${facultyId}`);
+                        if (!response.ok) throw new Error('Failed to load departments');
+                        const departments = await response.json();
+                        departments.forEach(dept => {
+                            const option = document.createElement('option');
+                            option.value = dept.departmentID;
+                            option.textContent = dept.departmentName;
+                            departmentSelect.appendChild(option);
+                        });
+                    } catch (error) {
+                        console.error('Error loading departments:', error);
+                        departmentSelect.innerHTML = '<option value="">Error loading departments</option>';
+                    }
+                }
+            });
+
+            document.querySelector('form').addEventListener('submit', function (e) {
+                const facultyId = document.getElementById('FacultyID').value;
+                const departmentId = document.getElementById('DepartmentID').value;
+                if (!facultyId) {
+                    e.preventDefault();
+                    document.getElementById('FacultyID-validation').textContent = 'Please select a faculty.';
+                }
+                if (!departmentId) {
+                    e.preventDefault();
+                    document.querySelector('span[asp-validation-for="DepartmentID"]').textContent = 'Please select a department.';
+                }
+            });
+        </script>
+}
