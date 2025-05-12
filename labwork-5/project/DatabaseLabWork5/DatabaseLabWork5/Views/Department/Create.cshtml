@@ -1,0 +1,40 @@
+﻿@model DatabaseLabWork5.Models.Department
+
+@{
+    ViewData["Title"] = "Add Department";
+}
+
+<div class="container mt-5">
+    <h2>Add New Department</h2>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+            <div class="alert alert-success" role="alert">
+            @TempData["SuccessMessage"]
+            </div>
+    }
+
+    <form asp-action="Create" asp-controller="Department" method="post">
+        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+        <div class="mb-3">
+            <label asp-for="DepartmentName" class="form-label">Department Name</label>
+            <input asp-for="DepartmentName" class="form-control" placeholder="Enter department name" />
+            <span asp-validation-for="DepartmentName" class="text-danger"></span>
+        </div>
+        <div class="mb-3">
+            <label asp-for="FacultyID" class="form-label">Faculty</label>
+            <select asp-for="FacultyID" class="form-select" asp-items="ViewBag.FacultyList">
+                <option value="">Select a faculty</option>
+            </select>
+            <span asp-validation-for="FacultyID" class="text-danger"></span>
+        </div>
+        <div class="mb-3">
+            <button type="submit" class="btn btn-primary">Add Department</button>
+            <a asp-action="Index" class="btn btn-secondary">Back to List</a>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+        <partial name="_ValidationScriptsPartial" />
+}
