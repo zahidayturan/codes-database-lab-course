@@ -1,10 +1,8 @@
-﻿using Microsoft.EntityFrameworkCore.Metadata.Internal;
-using System.ComponentModel.DataAnnotations.Schema;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
+using System.Collections.Generic;
 
 namespace DatabaseLabWork5.Models
 {
-    // Student Entity
     public class Student
     {
         [Key]
@@ -18,11 +16,11 @@ namespace DatabaseLabWork5.Models
         [StringLength(50)]
         public string LastName { get; set; }
 
-        [ForeignKey("Department")]
+        [Required]
         public int DepartmentID { get; set; }
 
-        public Department Department { get; set; }
+        public Department? Department { get; set; }
 
-        public List<StudentCourse> StudentCourses { get; set; }
+        public List<StudentCourse>? StudentCourses { get; set; }
     }
 }
