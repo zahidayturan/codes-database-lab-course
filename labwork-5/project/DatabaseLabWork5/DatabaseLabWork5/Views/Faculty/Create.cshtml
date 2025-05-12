@@ -1,0 +1,33 @@
+﻿@model DatabaseLabWork5.Models.Faculty
+
+@{
+    ViewData["Title"] = "Add Faculty";
+}
+
+<div class="container mt-5">
+    <h2>Add New Faculty</h2>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+            <div class="alert alert-success" role="alert">
+            @TempData["SuccessMessage"]
+            </div>
+    }
+
+    <form asp-action="Create" method="post">
+        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+        <div class="mb-3">
+            <label asp-for="FacultyName" class="form-label">Faculty Name</label>
+            <input asp-for="FacultyName" class="form-control" placeholder="Enter faculty name" />
+            <span asp-validation-for="FacultyName" class="text-danger"></span>
+        </div>
+        <div class="mb-3">
+            <button type="submit" class="btn btn-primary">Add Faculty</button>
+            <a asp-action="Index" class="btn btn-secondary">Back to List</a>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+        <partial name="_ValidationScriptsPartial" />
+}

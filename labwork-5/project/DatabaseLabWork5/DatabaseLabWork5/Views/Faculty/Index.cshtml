@@ -1,0 +1,35 @@
+﻿@model List<DatabaseLabWork5.Models.Faculty>
+
+@{
+    ViewData["Title"] = "Faculty List";
+}
+
+<div class="container mt-5">
+    <h2>Faculty List</h2>
+    <p>
+        <a asp-action="Create" class="btn btn-primary">Add New Faculty</a>
+        <a asp-controller="Home" asp-action="Index" class="btn btn-secondary">Back to Home</a>
+    </p>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Faculty ID</th>
+                <th>Faculty Name</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var faculty in Model)
+            {
+                    <tr>
+                        <td>@faculty.FacultyID</td>
+                        <td>@faculty.FacultyName</td>
+                        <td>
+                            <a asp-action="Edit" asp-route-id="@faculty.FacultyID" class="btn btn-sm btn-warning">Edit</a>
+                            <a asp-action="Delete" asp-route-id="@faculty.FacultyID" class="btn btn-sm btn-danger">Delete</a>
+                        </td>
+                    </tr>
+            }
+        </tbody>
+    </table>
+</div>

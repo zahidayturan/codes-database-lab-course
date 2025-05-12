@@ -1,0 +1,82 @@
+# .NET Core
+bin/
+obj/
+
+# .vs (Visual Studio kullanıyorsanız)
+.vs/
+.vscode/
+../.vs/
+
+
+# Rider IDE
+.idea/
+
+# User-specific files
+*.user
+*.userosscache
+*.suo
+*.userprefs
+
+# Windows Installer files
+Thumbs.db
+ehthumbs.db
+
+# .NET Core runtime & tools
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+# ASP.NET temporary files
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# npm
+node_modules/
+
+# Microsoft Azure Web App publish folder
+.publish/
+
+# Entity Framework Core Migrations
+Migrations/
+
+# Logs
+*.log
+
+# Docker files
+docker-compose.override.yml
+
+# ASP.NET Temp files
+wwwroot/
+
+# JetBrains Rider (if used)
+.idea/
+
+# .NET Core Global Tools
+global-tools/
+
+# Visual Studio for Mac
+.vscode/
+
+# Windows Installer files
+Thumbs.db
+ehthumbs.db
+
+# JetBrains Rider (if used)
+.idea/
+
+# User-specific files
+*.user
+*.userosscache
+*.suo
+*.userprefs
+
+# ASP.NET temporary files
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# macOS Finder files
+.DS_Store
