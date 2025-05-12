@@ -58,15 +58,77 @@ namespace DatabaseLabWork5.Controllers
         }
 
         // GET: /Course/Index
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(int? year, string semester)
         {
-            var courses = await _context.Courses
+            var viewModel = new CourseIndexViewModel
+            {
+                Courses = new List<Course>(),
+                EnrollmentInfos = new List<CourseEnrollmentInfo>(),
+                YearOptions = new List<SelectListItem>(),
+                SemesterOptions = new List<SelectListItem>
+                {
+                    new SelectListItem { Value = "", Text = "All Semesters" },
+                    new SelectListItem { Value = "Spring", Text = "Spring" },
+                    new SelectListItem { Value = "Summer", Text = "Summer" },
+                    new SelectListItem { Value = "Fall", Text = "Fall" }
+                },
+                SelectedYear = year,
+                SelectedSemester = semester
+            };
+
+            // Yıl seçeneklerini çek
+            var years = await _context.StudentCourses
+                .Select(sc => sc.Year)
+                .Distinct()
+                .OrderBy(y => y)
+                .ToListAsync();
+            viewModel.YearOptions.Add(new SelectListItem { Value = "", Text = "All Years" });
+            foreach (var y in years)
+            {
+                viewModel.YearOptions.Add(new SelectListItem { Value = y.ToString(), Text = y.ToString() });
+            }
+
+            // Kursları ve filtreleri uygula
+            var coursesQuery = _context.Courses
                 .Include(c => c.Department)
                 .ThenInclude(d => d.Faculty)
-                .ToListAsync();
-            ViewBag.FacultyList = new SelectList(_context.Faculties, "FacultyID", "FacultyName");
-            ViewBag.DepartmentList = new SelectList(_context.Departments, "DepartmentID", "DepartmentName");
-            return View(courses);
+                .AsQueryable();
+
+            if (year.HasValue || !string.IsNullOrEmpty(semester))
+            {
+                var filteredCourseIds = await _context.StudentCourses
+                    .Where(sc => (!year.HasValue || sc.Year == year.Value) &&
+                                 (string.IsNullOrEmpty(semester) || sc.Semester == semester))
+                    .Select(sc => sc.CourseID)
+                    .Distinct()
+                    .ToListAsync();
+                coursesQuery = coursesQuery.Where(c => filteredCourseIds.Contains(c.CourseID));
+            }
+
+            viewModel.Courses = await coursesQuery.OrderBy(c => c.CourseName).ToListAsync();
+
+            // Her kurs için yıl/dönem bilgisi (istemci tarafında)
+            foreach (var course in viewModel.Courses)
+            {
+                var enrollments = await _context.StudentCourses
+                    .Where(sc => sc.CourseID == course.CourseID)
+                    .Select(sc => new { sc.Year, sc.Semester })
+                    .Distinct()
+                    .ToListAsync();
+
+                var enrollmentStrings = enrollments
+                    .Select(e => $"{e.Year} {e.Semester}")
+                    .OrderBy(e => e)
+                    .ToList();
+
+                viewModel.EnrollmentInfos.Add(new CourseEnrollmentInfo
+                {
+                    CourseID = course.CourseID,
+                    Enrollments = enrollmentStrings.Any() ? enrollmentStrings : new List<string> { "No enrollments" }
+                });
+            }
+
+            return View(viewModel);
         }
 
 
