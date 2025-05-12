@@ -69,6 +69,79 @@ namespace DatabaseLabWork5.Controllers
             return View(courses);
         }
 
+
+        // POST: /Course/Details
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Details(int id)
+        {
+            return await GetCourseDetails(id);
+        }
+
+        // Ortak detay alma metodu
+        private async Task<IActionResult> GetCourseDetails(int id)
+        {
+            var course = await _context.Courses
+                .Include(c => c.Department)
+                .ThenInclude(d => d.Faculty)
+                .FirstOrDefaultAsync(c => c.CourseID == id);
+
+            if (course == null)
+            {
+                TempData["ErrorMessage"] = "Course not found.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            var studentCourses = await _context.StudentCourses
+                .Where(sc => sc.CourseID == id)
+                .Include(sc => sc.Student)
+                .ToListAsync();
+
+            var totalStudentCount = studentCourses.Count;
+
+            var studentGroups = studentCourses
+                .GroupBy(sc => new { sc.Year, sc.Semester })
+                .OrderBy(g => g.Key.Year)
+                .ThenBy(g => g.Key.Semester)
+                .Select(g => new CourseDetailsViewModel.StudentGroup
+                {
+                    Year = g.Key.Year,
+                    Semester = g.Key.Semester,
+                    Students = g.Select(sc => new CourseDetailsViewModel.StudentCourseInfo
+                    {
+                        StudentID = sc.StudentID,
+                        FirstName = sc.Student.FirstName,
+                        LastName = sc.Student.LastName,
+                        Midterm = sc.Midterm,
+                        Final = sc.Final,
+                        Result = sc.Midterm.HasValue && sc.Final.HasValue
+                            ? sc.Midterm.Value * 0.4 + sc.Final.Value * 0.6
+                            : null
+                    }).ToList(),
+                    StudentCount = g.Count(),
+                    AverageMidterm = g.Where(sc => sc.Midterm.HasValue).Any()
+                        ? g.Where(sc => sc.Midterm.HasValue).Average(sc => sc.Midterm.Value)
+                        : null,
+                    AverageFinal = g.Where(sc => sc.Final.HasValue).Any()
+                        ? g.Where(sc => sc.Final.HasValue).Average(sc => sc.Final.Value)
+                        : null,
+                    AverageResult = g.Where(sc => sc.Midterm.HasValue && sc.Final.HasValue).Any()
+                        ? g.Where(sc => sc.Midterm.HasValue && sc.Final.HasValue)
+                            .Average(sc => sc.Midterm.Value * 0.4 + sc.Final.Value * 0.6)
+                        : null
+                })
+                .ToList();
+
+            var model = new CourseDetailsViewModel
+            {
+                Course = course,
+                TotalStudentCount = totalStudentCount,
+                StudentGroups = studentGroups
+            };
+
+            return View(model);
+        }
+
         // POST: /Course/Edit
         [HttpPost]
         [ValidateAntiForgeryToken]

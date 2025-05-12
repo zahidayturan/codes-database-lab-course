@@ -73,6 +73,10 @@
                             </form>
                         </td>
                         <td>
+                                <form asp-action="Details" asp-controller="Course" method="post" class="d-inline">
+                                    <input type="hidden" name="id" value="@course.CourseID" />
+                                    <button type="submit" class="btn btn-sm btn-info">Details</button>
+                                </form>
                             <button type="button" class="btn btn-sm btn-warning edit-btn" data-id="@course.CourseID">Edit</button>
                             <form asp-action="Delete" asp-controller="Course" method="post" class="d-inline delete-form" data-id="@course.CourseID">
                                 <input type="hidden" name="id" value="@course.CourseID" />

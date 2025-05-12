@@ -1,0 +1,90 @@
+﻿@model DatabaseLabWork5.Models.CourseDetailsViewModel
+
+@{
+    ViewData["Title"] = "Course Details";
+}
+
+<div class="container mt-5">
+    <h2>Course Details</h2>
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+            <div class="alert alert-danger" role="alert">
+            @TempData["ErrorMessage"]
+            </div>
+    }
+
+    <div class="card mb-4">
+        <div class="card-body">
+            <h5 class="card-title">@Model.Course.CourseName</h5>
+            <p class="card-text"><strong>Course ID:</strong> @Model.Course.CourseID</p>
+            <p class="card-text"><strong>Department:</strong> @Model.Course.Department?.DepartmentName</p>
+            <p class="card-text"><strong>Faculty:</strong> @Model.Course.Department?.Faculty?.FacultyName</p>
+            <p class="card-text"><strong>Total Students:</strong> @Model.TotalStudentCount</p>
+        </div>
+    </div>
+
+    <h3>Students by Year and Semester</h3>
+    @if (Model.StudentGroups.Any())
+    {
+        @foreach (var group in Model.StudentGroups)
+        {
+                    <div class="mb-4">
+                        <h4>@group.Year - @group.Semester</h4>
+                @if (group.Students.Any())
+                {
+                                <table class="table table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>Student ID</th>
+                                            <th>First Name</th>
+                                            <th>Last Name</th>
+                                            <th>Midterm</th>
+                                            <th>Final</th>
+                                            <th>Result</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                            @foreach (var student in group.Students)
+                            {
+                                                <tr>
+                                                    <td>@student.StudentID</td>
+                                                    <td>@student.FirstName</td>
+                                                    <td>@student.LastName</td>
+                                                    <td>@(student.Midterm?.ToString() ?? "-")</td>
+                                                    <td>@(student.Final?.ToString() ?? "-")</td>
+                                                    <td>@(student.Result?.ToString("F2") ?? "-")</td>
+                                                    <td>
+                                                        <form asp-action="Details" asp-controller="Student" method="post" class="d-inline">
+                                                            <input type="hidden" name="id" value="@student.StudentID" />
+                                                            <button type="submit" class="btn btn-sm btn-info">Details</button>
+                                                        </form>
+                                                    </td>
+                                                </tr>
+                            }
+                                    </tbody>
+                                </table>
+                                <div class="alert alert-info">
+                                    <p><strong>Student Count:</strong> @group.StudentCount</p>
+                                    <p><strong>Average Midterm:</strong> @(group.AverageMidterm?.ToString("F2") ?? "N/A")</p>
+                                    <p><strong>Average Final:</strong> @(group.AverageFinal?.ToString("F2") ?? "N/A")</p>
+                                    <p><strong>Average Result:</strong> @(group.AverageResult?.ToString("F2") ?? "N/A")</p>
+                                </div>
+                }
+                else
+                {
+                                <p>No students found for this year and semester.</p>
+                }
+                    </div>
+        }
+    }
+    else
+    {
+            <div class="alert alert-info">
+                No students are enrolled in this course.
+            </div>
+    }
+
+    <a asp-action="Index" asp-controller="Course" class="btn btn-secondary mt-3">Back to Course List</a>
+</div>
