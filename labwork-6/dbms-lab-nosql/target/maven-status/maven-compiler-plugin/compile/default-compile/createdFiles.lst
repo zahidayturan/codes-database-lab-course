@@ -1,0 +1,8 @@
+app\store\RedisStore.class
+app\test\HazelcastTest.class
+app\model\Student.class
+app\store\MongoStore.class
+app\Main.class
+app\store\HazelcastStore.class
+app\test\MongoTest.class
+app\test\RedisTest.class
