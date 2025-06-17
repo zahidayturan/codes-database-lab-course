@@ -13,3 +13,5 @@ This repo contains some work done with mssql for the database lab course.
   - [Repo Link](https://github.com/zahidayturan/codes-database-lab-course/tree/main/labwork-4)
 - Work 5 (ORM Architecture, ASP.NET Core Web App, Entity Framework, C#, MVC, Bootstrap)
   - [Repo Link](https://github.com/zahidayturan/codes-database-lab-course/tree/main/labwork-5)
+- Work 6 (NoSQL, Redis, Hazelcast, Mongo, Spark, Java)
+  - [Repo Link](https://github.com/zahidayturan/codes-database-lab-course/tree/main/labwork-6/dbms-lab-nosql)
